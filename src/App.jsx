@@ -119,6 +119,8 @@ export default function App() {
   const [auditResults, setAuditResults] = useState([]);
   const [auditLoading, setAuditLoading] = useState(false);
   const [inventoryClient, setInventoryClient] = useState("all");
+  const [showRegModal, setShowRegModal] = useState(false);
+  const [copiedField, setCopiedField] = useState(null);
 
   useEffect(() => { saveNumbers(numbers); }, [numbers]);
 
@@ -193,12 +195,109 @@ export default function App() {
   const flaggedForReg = auditResults.filter(r=>r.data?.success&&(r.data.fraud_score>=40||r.data.VOIP||r.data.recent_abuse)&&!r.entry.registered);
   const checkedToday = entry.lastChecked && new Date(entry.lastChecked).toISOString().split("T")[0]===today();
 
+  const copyToClipboard = (text, field) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 1800);
+    });
+  };
+
+  const fcrNumber = digits ? `+1${digits}` : "";
+  const fcrFields = [
+    { label: "Phone Number", value: fcrNumber, note: "Paste into the number list" },
+    { label: "Display Name", value: "AltiSales", note: "Shows on caller ID" },
+    { label: "Company Name", value: "AltiSales", note: "" },
+    { label: "Company URL", value: "altisales.com", note: "" },
+    { label: "Service Provider", value: "Twilio", note: "" },
+    { label: "Call Category", value: "B2B Sales / Business", note: "Pick closest match" },
+  ];
+
+  const regSteps = [
+    "Go to freecallerregistry.com — log in with the AltiSales account",
+    "Click "Register Here" or "Add Numbers"",
+    "Paste the number (+1XXXXXXXXXX format) — already copied above",
+    "Fill in company info using the fields below — copy each one",
+    "Click "Send Verification Code" and enter the code from the AltiSales email",
+    "Submit — Hiya, First Orion & TNS will confirm within 2 business days",
+    "Come back here and click "Mark as Registered" ↓",
+  ];
+
+  // Registration Modal
+  const RegModal = () => (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }} onClick={()=>setShowRegModal(false)}>
+      <div style={{ background:"#0d1320", border:"1px solid rgba(255,159,10,0.25)", borderRadius:14, maxWidth:520, width:"100%", maxHeight:"90vh", overflowY:"auto", padding:24 }} onClick={e=>e.stopPropagation()}>
+
+        {/* Modal header */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
+          <div>
+            <div style={{ fontSize:15, fontWeight:700, color:"#e8edf5" }}>🛡️ Registration Assistant</div>
+            <div style={{ fontSize:10, color:"#3a4460", fontFamily:"'IBM Plex Mono',monospace", marginTop:2 }}>freecallerregistry.com — step by step</div>
+          </div>
+          <button onClick={()=>setShowRegModal(false)} style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, color:"#5a6480", fontSize:12, padding:"4px 10px", cursor:"pointer" }}>✕ Close</button>
+        </div>
+
+        {/* Number highlight */}
+        <div style={{ background:"rgba(255,159,10,0.07)", border:"1px solid rgba(255,159,10,0.2)", borderRadius:10, padding:"12px 16px", marginBottom:18, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <div>
+            <div style={{ fontSize:9, color:"#ff9f0a", fontFamily:"'IBM Plex Mono',monospace", letterSpacing:1.5, marginBottom:4 }}>NUMBER TO REGISTER</div>
+            <div style={{ fontSize:22, fontFamily:"'IBM Plex Mono',monospace", fontWeight:700, color:"#e8edf5", letterSpacing:2 }}>{fcrNumber}</div>
+          </div>
+          <button onClick={()=>copyToClipboard(fcrNumber,"number")} style={{ padding:"8px 14px", background:copiedField==="number"?"rgba(48,209,88,0.15)":"rgba(255,159,10,0.12)", border:`1px solid ${copiedField==="number"?"rgba(48,209,88,0.3)":"rgba(255,159,10,0.25)"}`, borderRadius:7, color:copiedField==="number"?"#30d158":"#ff9f0a", fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"'IBM Plex Mono',monospace", letterSpacing:0.5 }}>
+            {copiedField==="number"?"✓ COPIED":"COPY"}
+          </button>
+        </div>
+
+        {/* Steps */}
+        <div style={{ marginBottom:18 }}>
+          <div style={{ fontSize:9, color:"#1e2738", fontFamily:"'IBM Plex Mono',monospace", letterSpacing:2, marginBottom:10 }}>STEPS</div>
+          {regSteps.map((step, i) => (
+            <div key={i} style={{ display:"flex", gap:10, marginBottom:8, alignItems:"flex-start" }}>
+              <div style={{ minWidth:20, height:20, borderRadius:"50%", background:i===6?"rgba(48,209,88,0.15)":"rgba(10,132,255,0.12)", border:`1px solid ${i===6?"rgba(48,209,88,0.3)":"rgba(10,132,255,0.2)"}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:700, color:i===6?"#30d158":"#0a84ff", fontFamily:"'IBM Plex Mono',monospace", marginTop:1 }}>{i+1}</div>
+              <div style={{ fontSize:12, color:"#7a8499", lineHeight:1.5 }}>{step}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Open FCR button */}
+        <a href={FREE_CALLER_REGISTRY} target="_blank" rel="noopener noreferrer" style={{ display:"block", textAlign:"center", padding:"11px", background:"rgba(255,159,10,0.1)", border:"1px solid rgba(255,159,10,0.25)", borderRadius:9, color:"#ff9f0a", fontSize:12, fontWeight:700, textDecoration:"none", marginBottom:18, fontFamily:"'IBM Plex Mono',monospace", letterSpacing:0.5 }}>
+          OPEN FREECALLERREGISTRY.COM ↗
+        </a>
+
+        {/* Copy fields */}
+        <div style={{ marginBottom:18 }}>
+          <div style={{ fontSize:9, color:"#1e2738", fontFamily:"'IBM Plex Mono',monospace", letterSpacing:2, marginBottom:10 }}>COPY-PASTE FIELDS</div>
+          <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+            {fcrFields.map(f => (
+              <div key={f.label} style={{ display:"flex", alignItems:"center", gap:10, padding:"9px 12px", background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.05)", borderRadius:8 }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:9, color:"#2a3450", fontFamily:"'IBM Plex Mono',monospace", letterSpacing:1, marginBottom:2 }}>{f.label.toUpperCase()}</div>
+                  <div style={{ fontSize:13, fontFamily:"'IBM Plex Mono',monospace", color:"#c8d0e0", fontWeight:600 }}>{f.value}</div>
+                  {f.note && <div style={{ fontSize:9, color:"#3a4460", marginTop:1 }}>{f.note}</div>}
+                </div>
+                <button onClick={()=>copyToClipboard(f.value, f.label)} style={{ padding:"5px 10px", background:copiedField===f.label?"rgba(48,209,88,0.12)":"rgba(255,255,255,0.04)", border:`1px solid ${copiedField===f.label?"rgba(48,209,88,0.3)":"rgba(255,255,255,0.08)"}`, borderRadius:5, color:copiedField===f.label?"#30d158":"#5a6480", fontSize:10, cursor:"pointer", fontFamily:"'IBM Plex Mono',monospace", whiteSpace:"nowrap" }}>
+                  {copiedField===f.label?"✓":"COPY"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Mark as registered */}
+        <button onClick={()=>{ updateNumber(digits,{registered:true}); setShowRegModal(false); }} style={{ width:"100%", padding:"13px", background:"linear-gradient(135deg,#30d158,#20a040)", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", letterSpacing:0.5 }}>
+          ✓ Mark as Registered & Close
+        </button>
+        <div style={{ fontSize:10, color:"#2a3450", textAlign:"center", marginTop:8 }}>Only click this after you've submitted on freecallerregistry.com</div>
+      </div>
+    </div>
+  );
+
   // Inventory filter
   const inventoryNums = activeNumbers.filter(n => inventoryClient==="all" ? true : n.client===inventoryClient);
 
   return (
     <div style={{ minHeight:"100vh", background:"#070b12", color:"#c8d0e0", fontFamily:"'DM Sans',sans-serif", backgroundImage:`radial-gradient(ellipse 70% 40% at 50% -5%, rgba(10,132,255,0.07) 0%, transparent 60%)` }}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet" />
+      {showRegModal && <RegModal />}
 
       {/* Header */}
       <div style={{ borderBottom:"1px solid rgba(255,255,255,0.05)", padding:"14px 22px", display:"flex", alignItems:"center", gap:12, background:"rgba(7,11,18,0.92)", backdropFilter:"blur(12px)", position:"sticky", top:0, zIndex:10, flexWrap:"wrap" }}>
@@ -367,9 +466,16 @@ export default function App() {
               </Card>
             </div>
 
-            {/* ── Links ── */}
+            {/* ── Registration Assistant Button ── */}
             <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:8 }}>
-              <LinkBtn icon="🛡️" label="Register Number" sub="freecallerregistry.com" href={FREE_CALLER_REGISTRY} accent={entry.registered?"#30d158":"#ff9f0a"} />
+              <button onClick={()=>setShowRegModal(true)} style={{ display:"flex", alignItems:"center", gap:10, padding:"11px 14px", background:entry.registered?"rgba(48,209,88,0.08)":"rgba(255,159,10,0.08)", border:`1px solid ${entry.registered?"rgba(48,209,88,0.25)":"rgba(255,159,10,0.25)"}`, borderRadius:9, cursor:"pointer", flex:1, minWidth:130 }}>
+                <span style={{ fontSize:17 }}>🛡️</span>
+                <div style={{ textAlign:"left" }}>
+                  <div style={{ fontSize:12, fontWeight:600, color:entry.registered?"#30d158":"#ff9f0a" }}>{entry.registered?"Registered ✓":"Register This Number"}</div>
+                  <div style={{ fontSize:9, color:"#3a4460", fontFamily:"'IBM Plex Mono',monospace", marginTop:1 }}>{entry.registered?"freecallerregistry.com":"step-by-step guide"}</div>
+                </div>
+                {!entry.registered && <span style={{ marginLeft:"auto", color:"#ff9f0a", fontSize:11, opacity:0.5 }}>→</span>}
+              </button>
               <LinkBtn icon="🔍" label="IPQS Full Report" sub="Deep fraud analysis" href={`https://www.ipqualityscore.com/free-phone-number-lookup/lookup/free/${digits}`} accent="#0a84ff" />
             </div>
             <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:14 }}>
