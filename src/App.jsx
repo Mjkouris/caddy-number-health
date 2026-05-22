@@ -217,9 +217,9 @@ export default function App() {
     "Click Register Here or Add Numbers",
     "Paste the number (+1XXXXXXXXXX format) — already copied above",
     "Fill in company info using the fields below — copy each one",
-    "Click "Send Verification Code" and enter the code from the AltiSales email",
+    "Click Send Verification Code and enter the code from the AltiSales email",
     "Submit — Hiya, First Orion & TNS will confirm within 2 business days",
-    "Come back here and click "Mark as Registered" ↓",
+    "Come back here and click Mark as Registered below",
   ];
 
   // Registration Modal
