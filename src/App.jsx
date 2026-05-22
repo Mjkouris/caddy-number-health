@@ -214,7 +214,7 @@ export default function App() {
 
   const regSteps = [
     "Go to freecallerregistry.com — log in with the AltiSales account",
-    "Click "Register Here" or "Add Numbers"",
+    "Click Register Here or Add Numbers",
     "Paste the number (+1XXXXXXXXXX format) — already copied above",
     "Fill in company info using the fields below — copy each one",
     "Click "Send Verification Code" and enter the code from the AltiSales email",
