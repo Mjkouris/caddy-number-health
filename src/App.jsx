@@ -6,7 +6,7 @@ const TRUECALLER_URL = "https://www.truecaller.com/search/us/";
 const NOMOROBO_URL = "https://www.nomorobo.com/lookup/";
 const HIYA_URL = "https://hiya.com/";
 
-const CLIENTS = ["BEMO", "Modern Campus", "Dili.ai", "SPRX", "Other"];
+const CLIENTS = ["AltiSales Outbound", "Dili", "Factura", "Modern Campus", "BEMO", "ASAPP", "Other"];
 const RECHECK_OPTIONS = [
   { label: "30 days", days: 30 },
   { label: "60 days", days: 60 },
