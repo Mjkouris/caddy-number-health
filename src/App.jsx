@@ -147,7 +147,7 @@ export default function App() {
       if (data.error || !data.success) { setError(data.message||data.error||"API error"); }
       else {
         setResult(data);
-        updateNumber(digits, { digits, number:input, lastChecked:new Date().toISOString(), lastScore:data.fraud_score, lastData:data, firstSeen:entry.firstSeen||new Date().toISOString() });
+        updateNumber(digits, { digits, number:input, lastChecked:new Date().toISOString(), lastScore:data.fraud_score, lastData:data, firstSeen:entry.firstSeen||new Date().toISOString(), registered: entry.registered || false });
       }
     } catch { setError("Network error."); }
     setLoading(false);
@@ -267,7 +267,7 @@ export default function App() {
               <StatPill label="FRAUD SCORE" value={result.fraud_score} color={risk.color} sub={risk.label} />
               <StatPill label="LINE TYPE" value={result.line_type||"N/A"} color={result.line_type==="VOIP"?"#ff9f0a":"#7a8499"} />
               <StatPill label="CARRIER" value={result.carrier?.replace("INTERNATIONAL, INC.","INTL")||"N/A"} />
-              <StatPill label="LOCATION" value={result.city?`${result.city}, ${result.region}`:result.region||"N/A"} />
+              <StatPill label="LOCATION" value={result.city?`${result.city}, ${result.region}`:result.region||"N/A"} sub={result.VOIP?"carrier pool":""}  />
               <StatPill label="NUMBER AGE" value={entry.firstSeen?`${daysSince(entry.firstSeen)}d`:"New"} color={daysSince(entry.firstSeen)>90?"#ff9f0a":"#7a8499"} />
               <StatPill label="LAST CHECKED" value={entry.lastChecked?fmtDate(entry.lastChecked):"Now"} color={checkedToday?"#30d158":"#ff9f0a"} />
             </div>
@@ -285,23 +285,30 @@ export default function App() {
                   </div>
                 )}
               </div>
-              <div style={{ display:"flex", gap:12, alignItems:"center", flexWrap:"wrap" }}>
+              <div style={{ display:"flex", gap:10, alignItems:"center", flexWrap:"wrap" }}>
                 {[["DIALS","dials"],["CONNECTS","connects"]].map(([label,key])=>(
-                  <div key={key} style={{ display:"flex", alignItems:"center", gap:8 }}>
+                  <div key={key} style={{ display:"flex", alignItems:"center", gap:6 }}>
                     <span style={{ fontSize:10, color:"#3a4460", fontFamily:"'IBM Plex Mono',monospace" }}>{label}</span>
                     <input type="number" min="0" value={cr[key]}
                       onChange={e=>updateNumber(digits,{connectRate:{...cr,[key]:e.target.value}})}
-                      style={{ width:72, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.09)", borderRadius:6, padding:"7px 10px", color:"#e8edf5", fontSize:15, fontFamily:"'IBM Plex Mono',monospace", outline:"none", textAlign:"center" }} />
+                      style={{ width:52, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.09)", borderRadius:6, padding:"5px 8px", color:"#e8edf5", fontSize:13, fontFamily:"'IBM Plex Mono',monospace", outline:"none", textAlign:"center" }} />
                   </div>
                 ))}
                 {connectPct!==null ? (
                   <div style={{ marginLeft:"auto", textAlign:"center" }}>
-                    <div style={{ fontSize:40, fontWeight:700, fontFamily:"'IBM Plex Mono',monospace", color:connectVerdict.color, lineHeight:1 }}>{connectPct}%</div>
+                    <div style={{ fontSize:36, fontWeight:700, fontFamily:"'IBM Plex Mono',monospace", color:connectVerdict.color, lineHeight:1 }}>{connectPct}%</div>
                     <div style={{ fontSize:8, color:"#2a3450", fontFamily:"'IBM Plex Mono',monospace", letterSpacing:1.5, marginTop:2 }}>CONNECT RATE</div>
                     <div style={{ fontSize:10, color:connectVerdict.color, opacity:0.7, marginTop:3 }}>{connectVerdict.detail}</div>
                   </div>
                 ) : (
-                  <div style={{ marginLeft:"auto", fontSize:10, color:"#2a3450", fontFamily:"'IBM Plex Mono',monospace" }}>Log dials + connects to track performance</div>
+                  <div style={{ marginLeft:"auto", fontSize:9, color:"#2a3450", fontFamily:"'IBM Plex Mono',monospace", textAlign:"right", lineHeight:1.8 }}>
+                    <div>Log dials + connects to track</div>
+                    <div style={{ display:"flex", gap:8, marginTop:4, justifyContent:"flex-end" }}>
+                      {[["<5%","#ff3b30"],["5–9%","#ff9f0a"],["10%+","#30d158"]].map(([label,color])=>(
+                        <span key={label} style={{ fontSize:9, color, fontFamily:"'IBM Plex Mono',monospace", padding:"1px 6px", background:`${color}15`, borderRadius:3 }}>{label}</span>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
